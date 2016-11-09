@@ -1,0 +1,26 @@
+{
+  "name": "multilingual-jaded-brunch",
+  "description": "A brunch plugin to compile multilingual jade(pug) templates",
+  "author": "Siyu DU <dusiyh@gmail.com>",
+  "homepage": "https://github.com/secretworry/multilingual-jaded-brunch",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:secretworry/multilingual-jaded-brunch.git"
+  },
+  "main": "./lib/index",
+  "scripts": {
+    "test": "node_modules/.bin/mocha"
+  },
+  "dependencies": {
+    "i18n": "^0.8.3",
+    "jade": ">= 1.0.x < 2.0",
+    "lodash": "^4.7.0",
+    "mkdirp": "0.5.1",
+    "progeny": "~0.5.2"
+  },
+  "devDependencies": {
+    "mocha": "2.4.5",
+    "chai": "3.5.0"
+  }
+}
