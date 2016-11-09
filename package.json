@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git@github.com:secretworry/multilingual-jaded-brunch.git"
   },
-  "main": "./lib/index",
+  "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/mocha"
   },

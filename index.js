@@ -57,27 +57,33 @@ var exportFile = function(targetPath, source) {
 
 class MultilingualJadedCompile {
   constructor(config) {
-
     _.assignIn(this, DEFAULT_PROPERTIES);
     this.config = config.multilingualJaded || {};
     var i18nConfig = _.extend({}, MultilingualJadedCompile.I18N_DEFAULT_CONFIG, this.config.i18nConfig);
     if (this.config.locales && !i18nConfig.locales) {
       i18nConfig.locales = this.config.locales;
     }
-    this.i18n = i18n.configure(i18nConfig);
+    i18n.configure(i18nConfig);
     if (this.config.defaultLocale) {
       this.defaultLocale = this.config.defaultLocale;
     } else {
-      this.defaultLocale = this.i18n.getLocales()[0];
+      this.defaultLocale = i18n.getLocales()[0];
     }
     this.locals = this.config.locals || {};
     var jade = this.config.module || 'jade';
     this.jade = localRequire(jade);
     this.jadeOptions = _.omit(this.config, _.words("staticPatterns path module formater extension locales defaultLocale"));
+    if (!this.jadeOptions.compileDebug) {
+      this.jadeOptions.compileDebug = !config.optimize;
+    }
+    if (!this.jadeOptions.pretty) {
+      this.jadeOptions.pretty = !config.optimize;
+    }
     this.formater = this.config.formater || defaultFormater;
     if (this.config.path) {
-      this.staticPath = path.resolve(this.config.path);
+      this.staticPath = this.config.path;
     }
+    this.staticPath = path.resolve(this.staticPath);
 
     if (this.config.outputPath) {
       this.outputPath = this.config.outputPath;
@@ -96,15 +102,14 @@ class MultilingualJadedCompile {
   }
 
   compile(file) {
-    var templatePath = path.resolve(file.originalPath),
+    var templatePath = path.resolve(file.path),
         relativePath = path.relative(this.projectPath, templatePath);
     if (!templatePath.startsWith(this.staticPath)) {
       return Promise.resolve(file);
     }
-    var locales = this.i18n.getLocales();
+    var locales = i18n.getLocales();
     var options = _.extend({}, this.jadeOptions);
     options.filename = relativePath;
-    var i18n = this.i18n;
     var locals = _.extend({}, this.locals);
     locals.t = function() {
       return i18n.__.apply(i18n, arguments);
@@ -116,7 +121,7 @@ class MultilingualJadedCompile {
     var $this = this;
     return _.reduce(locales, function(result, locale) {
       return result.then(function() {
-        $this.i18n.setLocale(locale);
+        i18n.setLocale(locale);
         var template = $this.jade.compile(file.data, options),
             source = template(_.defaults(locals, {filename: relativePath}));
         var filepath = path.relative($this.staticPath, templatePath),
