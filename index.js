@@ -126,11 +126,12 @@ class MultilingualJadedCompile {
             source = template(_.defaults(locals, {filename: relativePath}));
         var filepath = path.relative($this.staticPath, templatePath),
             extname = path.extname(filepath),
+            directory = path.dirname(filepath),
             filename = path.basename(filepath, extname),
             targetPath = path.join($this.outputPath, $this.formater({filename: filename, locale: locale, extname: ".html"}));
         return exportFile(targetPath, source).then(function() {
           if (locale === $this.defaultLocale) {
-            var targetPath = path.join($this.outputPath, filepath);
+            var targetPath = path.join($this.outputPath, directory, filename + ".html");
             return exportFile(targetPath, source);
           } else {
             return;
