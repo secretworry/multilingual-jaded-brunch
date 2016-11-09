@@ -9,7 +9,7 @@ var progeny = require('progeny');
 
 function localRequire(module) {
   try {
-    var modulePath = path.join(process.cwd(), 'node_modules', module)
+    var modulePath = path.join(process.cwd(), 'node_modules', module);
     return require(modulePath);
   } catch(userError) {
     if (userError.code !== "MODULE_NOT_FOUND") {
@@ -23,7 +23,7 @@ function localRequire(module) {
   }
 }
 
-function defaultFormater = function(props) {
+function defaultFormater(props) {
   return path.join(props.locale, props.filename + props.extname);
 }
 
@@ -35,7 +35,27 @@ var DEFAULT_PROPERTIES = {
   projectPath: path.resolve(process.cwd())
 };
 
-module.exports = class MultilingualJadedCompile {
+var exportFile = function(targetPath, source) {
+  var targetDirectory = path.dirname(targetPath);
+  return new Promise(function(resolve, reject) {
+    mkdirp(targetDirectory, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        fs.writeFile(targetPath, source, function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      }
+    });
+  });
+};
+
+
+class MultilingualJadedCompile {
   constructor(config) {
 
     _.assignIn(this, DEFAULT_PROPERTIES);
@@ -51,7 +71,7 @@ module.exports = class MultilingualJadedCompile {
       this.defaultLocale = this.i18n.getLocales()[0];
     }
     this.locals = this.config.locals || {};
-    var jade = this.config.module || 'jade'
+    var jade = this.config.module || 'jade';
     this.jade = localRequire(jade);
     this.jadeOptions = _.omit(this.config, _.words("staticPatterns path module formater extension locales defaultLocale"));
     this.formater = this.config.formater || defaultFormater;
@@ -85,32 +105,13 @@ module.exports = class MultilingualJadedCompile {
     var options = _.extend({}, this.jadeOptions);
     options.filename = relativePath;
     var i18n = this.i18n;
-    locals = _.extend({}, this.locals);
+    var locals = _.extend({}, this.locals);
     locals.t = function() {
       return i18n.__.apply(i18n, arguments);
     };
     locals.tn = function() {
       return i18n.__n.apply(i18n, arguments);
     };
-
-    var output = function(targetPath, source) {
-      var targetDirectory = path.dirname(targetPath);
-      return new Promise(function(resolve, reject) {
-        mkdirp(targetDirectory, function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            fs.writeFile(targetPath, source, function(err, written, buffer) {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
-          }
-        });
-      });
-    }
 
     var $this = this;
     return _.reduce(locales, function(result, locale) {
@@ -121,18 +122,17 @@ module.exports = class MultilingualJadedCompile {
         var filepath = path.relative($this.staticPath, templatePath),
             extname = path.extname(filepath),
             filename = path.basename(filepath, extname),
-            directory = path.dirname(filepath),
             targetPath = path.join($this.outputPath, $this.formater({filename: filename, locale: locale, extname: ".html"}));
-        return output(targetPath, source).then(function() {
+        return exportFile(targetPath, source).then(function() {
           if (locale === $this.defaultLocale) {
             var targetPath = path.join($this.outputPath, filepath);
-            return output(targetPath, source);
+            return exportFile(targetPath, source);
           } else {
             return;
           }
         });
-      })
-    }, Promise.resolve())
+      });
+    }, Promise.resolve());
   }
 }
 
@@ -143,3 +143,5 @@ MultilingualJadedCompile.I18N_DEFAULT_CONFIG = {
 MultilingualJadedCompile.prototype.brunchPlugin = true;
 MultilingualJadedCompile.prototype.type = 'template';
 MultilingualJadedCompile.prototype.extension = 'jade';
+
+module.exports = MultilingualJadedCompile;
