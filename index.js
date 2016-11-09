@@ -58,7 +58,7 @@ var exportFile = function(targetPath, source) {
 class MultilingualJadedCompile {
   constructor(config) {
     _.assignIn(this, DEFAULT_PROPERTIES);
-    this.config = config.multilingualJaded || {};
+    this.config = (config.plugins && config.plugins.multilingualJaded) || {};
     var i18nConfig = _.extend({}, MultilingualJadedCompile.I18N_DEFAULT_CONFIG, this.config.i18nConfig);
     if (this.config.locales && !i18nConfig.locales) {
       i18nConfig.locales = this.config.locales;
